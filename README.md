@@ -1,5 +1,7 @@
 # GrafGit — GitHub Contribution Studio
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 **GrafGit** — це автономний десктопний інженерний інструмент для створення піксель-арту та написів на графіку активності GitHub (Contribution Graph) з можливістю сканування поточної історії комітів, малювання по різних роках та безпечного очищення.
 
 Працює повністю нативно на Python без важких веб-фреймворків (Electron тощо), споживає мінімум ресурсів (~30 МБ ОЗП) і стартує миттєво.
@@ -103,3 +105,12 @@ python run.py "C:\path\to\your\project"
 ```bash
 python -m unittest discover -s tests -p "test_*.py"
 ```
+
+---
+
+## Ліцензія
+
+Цей проект поширюється під умовами ліцензії **GNU General Public License v3.0 (GPLv3)**.  
+Повний офіційний текст умов та положень доступний у файлі [LICENSE](LICENSE).
+
+Copyright (C) 2024-2026 Rachenko
