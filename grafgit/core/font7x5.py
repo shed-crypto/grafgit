@@ -449,40 +449,342 @@ GLYPHS: Dict[str, List[str]] = {
         "..#..",
         "....."
     ],
+    "/": [
+        "....#",
+        "...#.",
+        "...#.",
+        "..#..",
+        ".#...",
+        ".#...",
+        "#...."
+    ],
+    "\\": [
+        "#....",
+        ".#...",
+        ".#...",
+        "..#..",
+        "...#.",
+        "...#.",
+        "....#"
+    ],
+    "_": [
+        ".....",
+        ".....",
+        ".....",
+        ".....",
+        ".....",
+        ".....",
+        "#####"
+    ],
+    "(": [
+        "..#",
+        ".#.",
+        "#..",
+        "#..",
+        "#..",
+        ".#.",
+        "..#"
+    ],
+    ")": [
+        "#..",
+        ".#.",
+        "..#",
+        "..#",
+        "..#",
+        ".#.",
+        "#.."
+    ],
+    "[": [
+        "####",
+        "#...",
+        "#...",
+        "#...",
+        "#...",
+        "#...",
+        "####"
+    ],
+    "]": [
+        "####",
+        "...#",
+        "...#",
+        "...#",
+        "...#",
+        "...#",
+        "####"
+    ],
+    "{": [
+        "..##",
+        ".#..",
+        ".#..",
+        "##..",
+        ".#..",
+        ".#..",
+        "..##"
+    ],
+    "}": [
+        "##..",
+        "..#.",
+        "..#.",
+        "..##",
+        "..#.",
+        "..#.",
+        "##.."
+    ],
+    "@": [
+        ".###.",
+        "#...#",
+        "#.#.#",
+        "#.###",
+        "#....",
+        "#....",
+        ".###."
+    ],
+    "$": [
+        "..#..",
+        ".####",
+        "#.#..",
+        ".###.",
+        "..#.#",
+        "####.",
+        "..#.."
+    ],
+    "%": [
+        "#...#",
+        "#..#.",
+        "..#..",
+        ".#...",
+        ".#..#",
+        "#...#",
+        "....."
+    ],
+    "&": [
+        ".##..",
+        "#..#.",
+        ".##..",
+        "#.##.",
+        "#..#.",
+        "#..#.",
+        ".##.#"
+    ],
+    "|": [
+        "#",
+        "#",
+        "#",
+        "#",
+        "#",
+        "#",
+        "#"
+    ],
+    "^": [
+        "..#..",
+        ".#.#.",
+        "#...#",
+        ".....",
+        ".....",
+        ".....",
+        "....."
+    ],
+    "~": [
+        ".....",
+        ".....",
+        ".##.#",
+        "#.##.",
+        ".....",
+        ".....",
+        "....."
+    ],
+    "\"": [
+        "#.#",
+        "#.#",
+        "...",
+        "...",
+        "...",
+        "...",
+        "..."
+    ],
+    "'": [
+        "#",
+        "#",
+        ".",
+        ".",
+        ".",
+        ".",
+        "."
+    ],
+    ";": [
+        ".",
+        "#",
+        ".",
+        ".",
+        "#",
+        "#",
+        "."
+    ],
+    ",": [
+        ".",
+        ".",
+        ".",
+        ".",
+        ".",
+        "#",
+        "#"
+    ],
+}
+
+# Cyrillic to Latin homoglyph / fallback mapping
+CYRILLIC_MAP = {
+    "А": "A", "В": "B", "С": "C", "Е": "E", "Н": "H", "І": "I", "Ї": "I",
+    "К": "K", "М": "M", "О": "O", "Р": "P", "Т": "T", "Х": "X", "У": "Y",
+    "Д": "D", "Л": "L", "З": "3", "Ч": "4", "Г": "G", "П": "P", "Ф": "F",
+    "Б": "B", "Ж": "X", "Ш": "W", "Щ": "W", "Ю": "U", "Я": "R"
+}
+
+# 3-pixel height compact bitmap font (allows 2 rows of text in a 7-pixel grid)
+GLYPHS_3PX: Dict[str, List[str]] = {
+    "A": ["###", "#.#", "#.#"],
+    "B": ["##.", "###", "##."],
+    "C": ["###", "#..", "###"],
+    "D": ["##.", "#.#", "##."],
+    "E": ["###", "##.", "###"],
+    "F": ["###", "##.", "#.."],
+    "G": ["###", "#.#", "###"],
+    "H": ["#.#", "###", "#.#"],
+    "I": ["#", "#", "#"],
+    "J": ["..#", "..#", "##."],
+    "K": ["#.#", "##.", "#.#"],
+    "L": ["#..", "#..", "###"],
+    "M": ["###", "#.#", "#.#"],
+    "N": ["##.", "#.#", "#.#"],
+    "O": ["###", "#.#", "###"],
+    "P": ["###", "###", "#.."],
+    "Q": ["###", "#.#", "..#"],
+    "R": ["###", "##.", "#.#"],
+    "S": [".##", ".#.", "##."],
+    "T": ["###", ".#.", ".#."],
+    "U": ["#.#", "#.#", "###"],
+    "V": ["#.#", "#.#", ".#."],
+    "W": ["#.#", "#.#", "###"],
+    "X": ["#.#", ".#.", "#.#"],
+    "Y": ["#.#", ".#.", ".#."],
+    "Z": ["##.", ".#.", ".##"],
+    "0": ["###", "#.#", "###"],
+    "1": ["##", ".#", ".#"],
+    "2": ["###", "..#", "###"],
+    "3": ["##.", ".##", "##."],
+    "4": ["#.#", "###", "..#"],
+    "5": ["###", "##.", "###"],
+    "6": ["#..", "###", "###"],
+    "7": ["###", "..#", "..#"],
+    "8": ["###", "###", "###"],
+    "9": ["###", "###", "..#"],
+    " ": ["..", "..", ".."],
+    "!": ["#", ".", "#"],
+    "?": ["##", "..", ".#"],
+    ".": ["...", "...", "#.."],
+    ":": ["#", ".", "#"],
+    "-": ["...", "###", "..."],
+    "+": [".#.", "###", ".#."],
+    "=": ["###", "...", "###"],
+    "/": ["..#", ".#.", "#.."],
+    "\\": ["#..", ".#.", "..#"],
+    "<": [".#", "#.", ".#"],
+    ">": ["#.", ".#", "#."],
+    "_": ["...", "...", "###"],
+    "(": ["#.", "#.", "#."],
+    ")": [".#", ".#", ".#"],
+    "[": ["##", "#.", "##"],
+    "]": ["##", ".#", "##"],
+    "{": ["##", "#.", "##"],
+    "}": ["##", ".#", "##"],
+    "*": [".#.", "###", ".#."],
+    "#": ["#.#", "###", "#.#"],
+    "\"": ["#.#", "...", "..."],
+    "'": ["#", "...", "..."],
+    ";": ["#", ".", "#"],
+    ",": ["...", "#", "#"],
 }
 
 
-def render_text(text: str, level: int = 4) -> List[List[int]]:
-    """Renders text string to a 2D matrix of shape [width][7].
-
-    Each column is a list of 7 integers (0 or level).
-    Space between characters is 1 blank column.
-    """
+def _render_single_line(text: str, glyph_dict: Dict[str, List[str]], height: int, level: int) -> List[List[int]]:
     matrix: List[List[int]] = []
     text = text.upper()
 
     i = 0
     while i < len(text):
-        if text[i:i + 2] == "<3":
+        if text[i:i + 2] == "<3" and "<3" in glyph_dict:
             glyph_key = "<3"
             i += 2
         else:
             glyph_key = text[i]
+            glyph_key = CYRILLIC_MAP.get(glyph_key, glyph_key)
             i += 1
 
-        glyph = GLYPHS.get(glyph_key, GLYPHS["?"])
+        fallback = glyph_dict.get("?", ["#"] * height)
+        glyph = glyph_dict.get(glyph_key, fallback)
         glyph_width = len(glyph[0])
 
-        # Transpose glyph (rows 0..6) into columns (0..glyph_width-1)
         for col_idx in range(glyph_width):
             col_data = [
                 level if glyph[row_idx][col_idx] == "#" else 0
-                for row_idx in range(7)
+                for row_idx in range(height)
             ]
             matrix.append(col_data)
 
-        # 1-pixel space between letters if not at the very end
         if i < len(text):
-            matrix.append([0] * 7)
+            matrix.append([0] * height)
 
     return matrix
+
+
+def render_text(
+    text: str,
+    level: int = 4,
+    font_size: str = "7px",
+    line2: str = ""
+) -> List[List[int]]:
+    """Renders text string(s) to a 2D matrix of shape [width][7].
+
+    Args:
+        text: Main text string (or multi-line string containing '\n').
+        level: Brightness level (1 to 4).
+        font_size: '7px' for single full-height line (default),
+                   '3px' for compact / two-line text.
+        line2: Optional second text line for '3px' mode.
+
+    Each column is a list of 7 integers (0 or level).
+    """
+    # Check if text contains newline
+    if "\n" in text and not line2:
+        parts = text.split("\n", 1)
+        line1_str = parts[0]
+        line2_str = parts[1]
+        font_size = "3px"
+    else:
+        line1_str = text
+        line2_str = line2
+
+    if font_size == "3px" or line2_str:
+        m1 = _render_single_line(line1_str, GLYPHS_3PX, 3, level)
+        if line2_str:
+            m2 = _render_single_line(line2_str, GLYPHS_3PX, 3, level)
+            max_cols = max(len(m1), len(m2))
+            composite: List[List[int]] = []
+            for c in range(max_cols):
+                col1 = m1[c] if c < len(m1) else [0, 0, 0]
+                col2 = m2[c] if c < len(m2) else [0, 0, 0]
+                # row 0..2: line1; row 3: 0 (separator); row 4..6: line2
+                composite.append([
+                    col1[0], col1[1], col1[2],
+                    0,
+                    col2[0], col2[1], col2[2]
+                ])
+            return composite
+        else:
+            # Single 3px line placed in top rows, padded to 7
+            composite = []
+            for col in m1:
+                composite.append([col[0], col[1], col[2], 0, 0, 0, 0])
+            return composite
+    else:
+        return _render_single_line(text, GLYPHS, 7, level)
+

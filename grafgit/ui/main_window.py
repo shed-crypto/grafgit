@@ -364,7 +364,7 @@ class MainWindow(tk.Tk):
         self._build_git_panel(git_card)
 
         # Add panels to horizontal paned window with comfortable minimum widths
-        self.h_paned.add(tools_card, minsize=420, stretch="always")
+        self.h_paned.add(tools_card, minsize=520, stretch="always")
         self.h_paned.add(git_card, minsize=320, stretch="always")
 
         # 5. Bottom Console Area
@@ -501,28 +501,32 @@ class MainWindow(tk.Tk):
 
         # Left: Elements List & Actions
         left_col = tk.Frame(split_frame, bg=BG_PANEL, width=240)
-        left_col.pack(side="left", fill="both", padx=(0, 8))
+        left_col.pack(side="left", fill="both", padx=(0, 6))
 
         list_btn_bar = tk.Frame(left_col, bg=BG_PANEL)
         list_btn_bar.pack(fill="x", pady=(0, 4))
 
+        # Row 1: Add new elements
+        btn_r1 = tk.Frame(list_btn_bar, bg=BG_PANEL)
+        btn_r1.pack(fill="x", pady=(0, 2))
+
         add_img_btn = tk.Button(
-            list_btn_bar,
-            text="+ Зображення",
+            btn_r1,
+            text="+ Картинка",
             bg=BTN_PRIMARY_BG,
             fg=BTN_PRIMARY_FG,
             activebackground=BTN_PRIMARY_HOVER,
             relief="flat",
             font=FONT_BOLD,
             cursor="hand2",
-            padx=6,
+            padx=2,
             pady=2,
             command=self._on_add_image_dialog
         )
-        add_img_btn.pack(side="left", padx=1)
+        add_img_btn.pack(side="left", fill="x", expand=True, padx=1)
 
         add_txt_btn = tk.Button(
-            list_btn_bar,
+            btn_r1,
             text="+ Текст",
             bg=BTN_SECONDARY_BG,
             fg=BTN_SECONDARY_FG,
@@ -530,14 +534,14 @@ class MainWindow(tk.Tk):
             relief="flat",
             font=FONT_BOLD,
             cursor="hand2",
-            padx=6,
+            padx=2,
             pady=2,
             command=self._on_add_text_dialog
         )
-        add_txt_btn.pack(side="left", padx=1)
+        add_txt_btn.pack(side="left", fill="x", expand=True, padx=1)
 
         add_tmpl_btn = tk.Button(
-            list_btn_bar,
+            btn_r1,
             text="+ Шаблон",
             bg=BG_CARD,
             fg=ACCENT_BLUE,
@@ -545,15 +549,19 @@ class MainWindow(tk.Tk):
             relief="flat",
             font=FONT_BOLD,
             cursor="hand2",
-            padx=6,
+            padx=2,
             pady=2,
             command=self._on_add_template_menu
         )
-        add_tmpl_btn.pack(side="left", padx=1)
+        add_tmpl_btn.pack(side="left", fill="x", expand=True, padx=1)
+
+        # Row 2: Selected element actions (Duplicate & Delete)
+        btn_r2 = tk.Frame(list_btn_bar, bg=BG_PANEL)
+        btn_r2.pack(fill="x", pady=(1, 0))
 
         dup_btn = tk.Button(
-            list_btn_bar,
-            text="Дублювати",
+            btn_r2,
+            text="⎘ Дублювати",
             bg=BG_CARD,
             fg=TEXT_PRIMARY,
             activebackground=BTN_SECONDARY_HOVER,
@@ -565,11 +573,11 @@ class MainWindow(tk.Tk):
             pady=2,
             command=self._on_duplicate_selected_element
         )
-        dup_btn.pack(side="left", padx=1)
+        dup_btn.pack(side="left", fill="x", expand=True, padx=1)
 
         del_btn = tk.Button(
-            list_btn_bar,
-            text="Видалити",
+            btn_r2,
+            text="✕ Видалити",
             bg=BG_CARD,
             fg="#f85149",
             activebackground=BTN_DANGER_HOVER,
@@ -581,7 +589,7 @@ class MainWindow(tk.Tk):
             pady=2,
             command=self._on_delete_selected_element
         )
-        del_btn.pack(side="right", padx=1)
+        del_btn.pack(side="left", fill="x", expand=True, padx=1)
 
         # Listbox for elements
         self.elements_listbox = tk.Listbox(
@@ -664,6 +672,7 @@ class MainWindow(tk.Tk):
         self._create_header_btn(tmpl_row1, "+ Галочка", lambda: self._apply_template("check"))
         self._create_header_btn(tmpl_row1, "+ Хвиля", lambda: self._apply_template("wave"))
         self._create_header_btn(tmpl_row1, "+ Шахівниця", lambda: self._apply_template("checkerboard"))
+        self._create_header_btn(tmpl_row1, "+ 👾 Загарбник", lambda: self._apply_template("invader"))
 
         tmpl_row2 = tk.Frame(tmpl_tab, bg=BG_PANEL)
         tmpl_row2.pack(fill="x", padx=6, pady=(4, 6))
@@ -684,8 +693,27 @@ class MainWindow(tk.Tk):
         )
         info_lbl.pack(fill="x", padx=8, pady=(2, 4))
 
+    def _nudge_x(self, delta: int):
+        val = int(self.x_scale.get()) + delta
+        val = max(-35, min(55, val))
+        self.x_scale.set(val)
+        self._on_inspector_slider_change()
+
+    def _nudge_y(self, delta: int):
+        val = int(self.y_scale.get()) + delta
+        val = max(-25, min(25, val))
+        self.y_scale.set(val)
+        self._on_inspector_slider_change()
+
+    def _nudge_h(self, delta: int):
+        if hasattr(self, "h_scale") and self.h_scale.winfo_exists():
+            val = int(self.h_scale.get()) + delta
+            val = max(1, min(35, val))
+            self.h_scale.set(val)
+            self._on_inspector_slider_change()
+
     def _build_inspector_widgets(self, parent):
-        """Builds controls inside the Element Inspector using smooth sliders."""
+        """Builds controls inside the Element Inspector using responsive sliders and step buttons."""
         self.inspector_header = tk.Label(
             parent,
             text="Оберіть або додайте елемент зі списку ліворуч",
@@ -695,21 +723,23 @@ class MainWindow(tk.Tk):
         )
         self.inspector_header.pack(anchor="w", padx=10, pady=(6, 4))
 
-        # Common Sliders Frame (X and Y position with smooth Scales!)
+        # Position controls (X and Y with quick step buttons!)
         pos_frame = tk.Frame(parent, bg=BG_CARD)
         pos_frame.pack(fill="x", padx=10, pady=2)
 
-        # X Slider (0..52 weeks)
+        # X Slider (-25..52 weeks)
         x_row = tk.Frame(pos_frame, bg=BG_CARD)
         x_row.pack(fill="x", pady=1)
 
-        tk.Label(x_row, text="Зсув X (тиждень):", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
+        tk.Label(x_row, text="Зсув X:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
+        tk.Button(x_row, text="◀", bg=BG_PANEL, fg=TEXT_PRIMARY, activebackground=BTN_SECONDARY_HOVER, relief="flat", bd=0, padx=4, pady=0, font=FONT_SMALL, cursor="hand2", command=lambda: self._nudge_x(-1)).pack(side="left", padx=1)
+
         self.x_scale = tk.Scale(
             x_row,
-            from_=0,
-            to=52,
+            from_=-35,
+            to=55,
             orient="horizontal",
-            length=220,
+            length=110,
             bg=BG_CARD,
             fg=TEXT_WHITE,
             troughcolor=BG_INPUT,
@@ -718,21 +748,25 @@ class MainWindow(tk.Tk):
             showvalue=0,
             command=self._on_inspector_slider_change
         )
-        self.x_scale.pack(side="left", padx=4)
-        self.x_val_lbl = tk.Label(x_row, text="тиждень 0", bg=BG_CARD, fg=ACCENT_GREEN, font=FONT_BOLD, width=11, anchor="w")
-        self.x_val_lbl.pack(side="left", padx=4)
+        self.x_scale.pack(side="left", padx=2)
+        tk.Button(x_row, text="▶", bg=BG_PANEL, fg=TEXT_PRIMARY, activebackground=BTN_SECONDARY_HOVER, relief="flat", bd=0, padx=4, pady=0, font=FONT_SMALL, cursor="hand2", command=lambda: self._nudge_x(1)).pack(side="left", padx=1)
 
-        # Y Slider (0..6 rows)
+        self.x_val_lbl = tk.Label(x_row, text="тижд. 0", bg=BG_CARD, fg=ACCENT_GREEN, font=FONT_BOLD, width=8, anchor="w")
+        self.x_val_lbl.pack(side="left", padx=3)
+
+        # Y Slider (-25..25 rows)
         y_row = tk.Frame(pos_frame, bg=BG_CARD)
         y_row.pack(fill="x", pady=1)
 
-        tk.Label(y_row, text="Зсув Y (рядок):", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
+        tk.Label(y_row, text="Зсув Y:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
+        tk.Button(y_row, text="▲", bg=BG_PANEL, fg=TEXT_PRIMARY, activebackground=BTN_SECONDARY_HOVER, relief="flat", bd=0, padx=4, pady=0, font=FONT_SMALL, cursor="hand2", command=lambda: self._nudge_y(-1)).pack(side="left", padx=1)
+
         self.y_scale = tk.Scale(
             y_row,
-            from_=0,
-            to=6,
+            from_=-25,
+            to=25,
             orient="horizontal",
-            length=220,
+            length=110,
             bg=BG_CARD,
             fg=TEXT_WHITE,
             troughcolor=BG_INPUT,
@@ -741,11 +775,13 @@ class MainWindow(tk.Tk):
             showvalue=0,
             command=self._on_inspector_slider_change
         )
-        self.y_scale.pack(side="left", padx=4)
-        self.y_val_lbl = tk.Label(y_row, text="рядок 0", bg=BG_CARD, fg=ACCENT_GREEN, font=FONT_BOLD, width=11, anchor="w")
+        self.y_scale.pack(side="left", padx=2)
+        tk.Button(y_row, text="▼", bg=BG_PANEL, fg=TEXT_PRIMARY, activebackground=BTN_SECONDARY_HOVER, relief="flat", bd=0, padx=4, pady=0, font=FONT_SMALL, cursor="hand2", command=lambda: self._nudge_y(1)).pack(side="left", padx=1)
+
+        self.y_val_lbl = tk.Label(y_row, text="ряд. 0", bg=BG_CARD, fg=ACCENT_GREEN, font=FONT_BOLD, width=9, anchor="w")
         self.y_val_lbl.pack(side="left", padx=4)
 
-        # Dynamic Content Container (Swapped depending on Image vs Text)
+        # Dynamic Content Container (Swapped depending on Image vs Text vs Template)
         self.type_specific_frame = tk.Frame(parent, bg=BG_CARD)
         self.type_specific_frame.pack(fill="both", expand=True, padx=10, pady=(2, 6))
 
@@ -757,19 +793,21 @@ class MainWindow(tk.Tk):
         f_row = tk.Frame(parent, bg=BG_CARD)
         f_row.pack(fill="x", pady=2)
 
-        tk.Label(f_row, text="Файл:", bg=BG_CARD, fg=TEXT_MUTED, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
+        tk.Label(f_row, text="Файл:", bg=BG_CARD, fg=TEXT_MUTED, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
         fname = os.path.basename(el.get("filepath", ""))
         self.cur_img_lbl = tk.Label(f_row, text=fname, bg=BG_CARD, fg=ACCENT_BLUE, font=FONT_BOLD, anchor="w")
-        self.cur_img_lbl.pack(side="left", fill="x", expand=True, padx=4)
+        self.cur_img_lbl.pack(side="left", fill="x", expand=True, padx=2)
 
         tk.Button(
             f_row,
-            text="Змінити файл...",
+            text="Змінити...",
             bg=BG_PANEL,
             fg=TEXT_PRIMARY,
             relief="flat",
             bd=0,
             font=FONT_SMALL,
+            cursor="hand2",
+            padx=6,
             command=self._on_change_element_image
         ).pack(side="right")
 
@@ -777,14 +815,14 @@ class MainWindow(tk.Tk):
         sens_row = tk.Frame(parent, bg=BG_CARD)
         sens_row.pack(fill="x", pady=2)
 
-        tk.Label(sens_row, text="Сила виділення:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
+        tk.Label(sens_row, text="Контраст:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
         self.sens_scale = tk.Scale(
             sens_row,
             from_=0.2,
             to=3.0,
             resolution=0.1,
             orient="horizontal",
-            length=220,
+            length=130,
             bg=BG_CARD,
             fg=TEXT_WHITE,
             troughcolor=BG_INPUT,
@@ -794,7 +832,7 @@ class MainWindow(tk.Tk):
             command=self._on_inspector_slider_change
         )
         self.sens_scale.set(el.get("sensitivity", 1.0))
-        self.sens_scale.pack(side="left", padx=4)
+        self.sens_scale.pack(side="left", padx=2)
 
         self.sens_val_lbl = tk.Label(
             sens_row,
@@ -802,22 +840,24 @@ class MainWindow(tk.Tk):
             bg=BG_CARD,
             fg=ACCENT_GREEN,
             font=FONT_BOLD,
-            width=11,
+            width=6,
             anchor="w"
         )
-        self.sens_val_lbl.pack(side="left", padx=4)
+        self.sens_val_lbl.pack(side="left", padx=2)
 
-        # Row 3: Height & Invert Checkbox
-        opt_row = tk.Frame(parent, bg=BG_CARD)
-        opt_row.pack(fill="x", pady=2)
+        # Row 3: Height & Scale Slider (1..25 px, allowing stretching outside 7 rows!)
+        h_row = tk.Frame(parent, bg=BG_CARD)
+        h_row.pack(fill="x", pady=2)
 
-        tk.Label(opt_row, text="Висота (px):", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
+        tk.Label(h_row, text="Висота:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
+        tk.Button(h_row, text="−", bg=BG_PANEL, fg=TEXT_PRIMARY, activebackground=BTN_SECONDARY_HOVER, relief="flat", bd=0, padx=4, pady=0, font=FONT_BOLD, cursor="hand2", command=lambda: self._nudge_h(-1)).pack(side="left", padx=1)
+
         self.h_scale = tk.Scale(
-            opt_row,
+            h_row,
             from_=1,
-            to=7,
+            to=35,
             orient="horizontal",
-            length=120,
+            length=110,
             bg=BG_CARD,
             fg=TEXT_WHITE,
             troughcolor=BG_INPUT,
@@ -827,60 +867,115 @@ class MainWindow(tk.Tk):
             command=self._on_inspector_slider_change
         )
         self.h_scale.set(el.get("height", 7))
-        self.h_scale.pack(side="left", padx=4)
+        self.h_scale.pack(side="left", padx=2)
+        tk.Button(h_row, text="+", bg=BG_PANEL, fg=TEXT_PRIMARY, activebackground=BTN_SECONDARY_HOVER, relief="flat", bd=0, padx=4, pady=0, font=FONT_BOLD, cursor="hand2", command=lambda: self._nudge_h(1)).pack(side="left", padx=1)
 
-        self.h_val_lbl = tk.Label(opt_row, text=f"{el.get('height', 7)} px", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=6, anchor="w")
+        self.h_val_lbl = tk.Label(h_row, text=f"{el.get('height', 7)} px", bg=BG_CARD, fg=ACCENT_GREEN, font=FONT_BOLD, width=6, anchor="w")
         self.h_val_lbl.pack(side="left", padx=2)
+
+        # Row 4: Dedicated clean vertical layout for checkboxes
+        chk_frame = tk.Frame(parent, bg=BG_CARD)
+        chk_frame.pack(fill="x", pady=(3, 1))
+
+        self.autocrop_var = tk.BooleanVar(value=el.get("autocrop", True))
+        crop_chk = tk.Checkbutton(
+            chk_frame,
+            text="Авто-обрізка полів (видаляє рамки та порожні краї)",
+            variable=self.autocrop_var,
+            command=self._on_inspector_slider_change,
+            bg=BG_CARD,
+            fg=TEXT_PRIMARY,
+            selectcolor=BG_INPUT,
+            activebackground=BG_CARD,
+            activeforeground=TEXT_WHITE,
+            font=FONT_SMALL
+        )
+        crop_chk.pack(anchor="w", pady=1)
 
         self.invert_var = tk.BooleanVar(value=el.get("invert", False))
         inv_chk = tk.Checkbutton(
-            opt_row,
-            text="Інвертувати чорне/біле",
+            chk_frame,
+            text="Інвертувати колір (темне ↔ світле)",
             variable=self.invert_var,
             command=self._on_inspector_slider_change,
             bg=BG_CARD,
             fg=TEXT_PRIMARY,
             selectcolor=BG_INPUT,
+            activebackground=BG_CARD,
+            activeforeground=TEXT_WHITE,
             font=FONT_SMALL
         )
-        inv_chk.pack(side="left", padx=10)
+        inv_chk.pack(anchor="w", pady=1)
+
+        # Tip on removing frames/borders
+        tip_frame = tk.Frame(parent, bg=BG_CARD)
+        tip_frame.pack(fill="x", pady=(4, 2))
+        tip_lbl = tk.Label(
+            tip_frame,
+            text="💡 Як прибрати рамку: увімкніть «Авто-обрізка» або збільшіть висоту (>7px) і зсуньте Зсув X / Y [◀ ▲], щоб винести зайву рамку за межі графіка.",
+            bg=BG_CARD,
+            fg=TEXT_MUTED,
+            font=FONT_SMALL,
+            wraplength=320,
+            justify="left"
+        )
+        tip_lbl.pack(anchor="w")
 
     def _build_text_inspector(self, parent, el: dict):
         for w in parent.winfo_children():
             w.destroy()
 
-        # Row 1: Live Text Input
-        t_row = tk.Frame(parent, bg=BG_CARD)
-        t_row.pack(fill="x", pady=2)
+        # Row 1: Font Size / Rows Mode
+        mode_row = tk.Frame(parent, bg=BG_CARD)
+        mode_row.pack(fill="x", pady=1)
 
-        tk.Label(t_row, text="Текст:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
-        self.live_text_var = tk.StringVar(value=el.get("text", "CODE"))
-        self.live_text_var.trace_add("write", lambda *a: self._on_live_text_change())
+        tk.Label(mode_row, text="Розмір:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
+        self.font_size_var = tk.StringVar(value=el.get("font_size", "7px"))
 
-        t_entry = tk.Entry(
-            t_row,
-            textvariable=self.live_text_var,
-            bg=BG_INPUT,
+        r1 = tk.Radiobutton(
+            mode_row,
+            text="1 рядок (7px)",
+            variable=self.font_size_var,
+            value="7px",
+            bg=BG_CARD,
             fg=TEXT_WHITE,
-            insertbackground=TEXT_WHITE,
-            font=FONT_BOLD,
-            width=20
+            selectcolor="#1f6feb",
+            activebackground=BTN_SECONDARY_HOVER,
+            font=FONT_SMALL,
+            command=self._on_text_size_change
         )
-        t_entry.pack(side="left", padx=4)
+        r1.pack(side="left", padx=2)
 
-        tk.Label(t_row, text="(динамічне оновлення)", bg=BG_CARD, fg=TEXT_MUTED, font=FONT_SMALL).pack(side="left", padx=6)
+        r2 = tk.Radiobutton(
+            mode_row,
+            text="2 рядки (міні)",
+            variable=self.font_size_var,
+            value="3px",
+            bg=BG_CARD,
+            fg=TEXT_WHITE,
+            selectcolor="#1f6feb",
+            activebackground=BTN_SECONDARY_HOVER,
+            font=FONT_SMALL,
+            command=self._on_text_size_change
+        )
+        r2.pack(side="left", padx=4)
 
-        # Row 2: Level Selection
+        # Row 2: Text Input(s) Container
+        self.text_inputs_container = tk.Frame(parent, bg=BG_CARD)
+        self.text_inputs_container.pack(fill="x", pady=2)
+        self._build_text_inputs_subwidgets(el)
+
+        # Row 3: Brightness Level Selection (Compact segmented color pills!)
         lvl_row = tk.Frame(parent, bg=BG_CARD)
         lvl_row.pack(fill="x", pady=2)
 
-        tk.Label(lvl_row, text="Яскравість (Рівень):", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
+        tk.Label(lvl_row, text="Яскравість:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
         self.text_lvl_var = tk.IntVar(value=el.get("level", 4))
 
         for l in range(1, 5):
             b = tk.Radiobutton(
                 lvl_row,
-                text=f"Рівень {l}",
+                text=f" {l} ",
                 variable=self.text_lvl_var,
                 value=l,
                 indicatoron=0,
@@ -888,12 +983,193 @@ class MainWindow(tk.Tk):
                 fg=TEXT_WHITE,
                 selectcolor="#238636",
                 activebackground=LEVEL_BORDERS[l],
-                font=FONT_SMALL,
-                padx=8,
-                pady=2,
+                font=FONT_BOLD,
+                width=3,
+                padx=4,
+                pady=1,
                 command=self._on_inspector_slider_change
             )
             b.pack(side="left", padx=2)
+
+        tk.Label(lvl_row, text="(рівні 1–4)", bg=BG_CARD, fg=TEXT_MUTED, font=FONT_SMALL).pack(side="left", padx=4)
+
+    def _build_text_inputs_subwidgets(self, el: dict):
+        for w in self.text_inputs_container.winfo_children():
+            w.destroy()
+
+        is_2lines = (self.font_size_var.get() == "3px")
+        if not is_2lines:
+            row = tk.Frame(self.text_inputs_container, bg=BG_CARD)
+            row.pack(fill="x")
+            tk.Label(row, text="Текст:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
+            self.live_text_var = tk.StringVar(value=el.get("text", "CODE"))
+            self.live_text_var.trace_add("write", lambda *a: self._on_live_text_change())
+            t_entry = tk.Entry(
+                row,
+                textvariable=self.live_text_var,
+                bg=BG_INPUT,
+                fg=TEXT_WHITE,
+                insertbackground=TEXT_WHITE,
+                font=FONT_BOLD,
+                width=20
+            )
+            t_entry.pack(side="left", padx=2)
+        else:
+            row1 = tk.Frame(self.text_inputs_container, bg=BG_CARD)
+            row1.pack(fill="x", pady=1)
+            tk.Label(row1, text="Рядок 1:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
+            self.live_text_var = tk.StringVar(value=el.get("text", "//TODO"))
+            self.live_text_var.trace_add("write", lambda *a: self._on_live_text_change())
+            t_entry1 = tk.Entry(
+                row1,
+                textvariable=self.live_text_var,
+                bg=BG_INPUT,
+                fg=TEXT_WHITE,
+                insertbackground=TEXT_WHITE,
+                font=FONT_BOLD,
+                width=20
+            )
+            t_entry1.pack(side="left", padx=2)
+
+            row2 = tk.Frame(self.text_inputs_container, bg=BG_CARD)
+            row2.pack(fill="x", pady=1)
+            tk.Label(row2, text="Рядок 2:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
+            self.live_line2_var = tk.StringVar(value=el.get("line2", "2024"))
+            self.live_line2_var.trace_add("write", lambda *a: self._on_live_text_change())
+            t_entry2 = tk.Entry(
+                row2,
+                textvariable=self.live_line2_var,
+                bg=BG_INPUT,
+                fg=TEXT_WHITE,
+                insertbackground=TEXT_WHITE,
+                font=FONT_BOLD,
+                width=20
+            )
+            t_entry2.pack(side="left", padx=2)
+
+    def _on_text_size_change(self):
+        if not self.selected_element_id:
+            return
+        elements = self.project.get_elements()
+        el = next((e for e in elements if e["id"] == self.selected_element_id), None)
+        if not el:
+            return
+        new_size = self.font_size_var.get()
+        updates = {"font_size": new_size}
+        if new_size == "3px" and not el.get("line2"):
+            updates["line2"] = "2024"
+        self.project.update_element(self.selected_element_id, updates)
+        # Update current element dict
+        el.update(updates)
+        self._build_text_inputs_subwidgets(el)
+        self._refresh_elements_listbox()
+        self.grid_widget.render_all()
+        self._refresh_stats()
+
+    def _build_template_inspector(self, parent, el: dict):
+        for w in parent.winfo_children():
+            w.destroy()
+
+        t_lbl_row = tk.Frame(parent, bg=BG_CARD)
+        t_lbl_row.pack(fill="x", pady=(1, 2))
+        tk.Label(t_lbl_row, text="Вибір шаблону:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
+
+        self.template_key_var = tk.StringVar(value=el.get("template_key", "heart"))
+
+        # Row 1 of choices
+        r1_frame = tk.Frame(parent, bg=BG_CARD)
+        r1_frame.pack(fill="x", pady=1)
+        for key, title in [("heart", "♥ Серце"), ("check", "✔ Галочка")]:
+            b = tk.Radiobutton(
+                r1_frame,
+                text=title,
+                variable=self.template_key_var,
+                value=key,
+                bg=BG_CARD,
+                fg=TEXT_WHITE,
+                selectcolor="#1f6feb",
+                activebackground=BTN_SECONDARY_HOVER,
+                font=FONT_SMALL,
+                command=self._on_template_type_change
+            )
+            b.pack(side="left", padx=4)
+
+        # Row 2 of choices
+        r2_frame = tk.Frame(parent, bg=BG_CARD)
+        r2_frame.pack(fill="x", pady=1)
+        for key, title in [("wave", "~ Хвиля"), ("checkerboard", "▦ Шахівниця"), ("invader", "👾 Загарбник")]:
+            b = tk.Radiobutton(
+                r2_frame,
+                text=title,
+                variable=self.template_key_var,
+                value=key,
+                bg=BG_CARD,
+                fg=TEXT_WHITE,
+                selectcolor="#1f6feb",
+                activebackground=BTN_SECONDARY_HOVER,
+                font=FONT_SMALL,
+                command=self._on_template_type_change
+            )
+            b.pack(side="left", padx=4)
+
+        # Row 3: Brightness
+        lvl_row = tk.Frame(parent, bg=BG_CARD)
+        lvl_row.pack(fill="x", pady=(3, 2))
+
+        tk.Label(lvl_row, text="Яскравість:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=8, anchor="w").pack(side="left")
+        self.tmpl_lvl_var = tk.IntVar(value=el.get("level", 4))
+
+        for l in range(1, 5):
+            b = tk.Radiobutton(
+                lvl_row,
+                text=f" {l} ",
+                variable=self.tmpl_lvl_var,
+                value=l,
+                indicatoron=0,
+                bg=LEVEL_COLORS[l],
+                fg=TEXT_WHITE,
+                selectcolor="#238636",
+                activebackground=LEVEL_BORDERS[l],
+                font=FONT_BOLD,
+                width=3,
+                padx=4,
+                pady=1,
+                command=self._on_template_level_change
+            )
+            b.pack(side="left", padx=2)
+
+        tk.Label(lvl_row, text="(рівні 1–4)", bg=BG_CARD, fg=TEXT_MUTED, font=FONT_SMALL).pack(side="left", padx=4)
+
+    def _on_template_type_change(self):
+        if not self.selected_element_id:
+            return
+        new_key = self.template_key_var.get()
+        self.project.update_element(self.selected_element_id, {"template_key": new_key})
+        self._refresh_elements_listbox()
+        self.grid_widget.render_all()
+        self._refresh_stats()
+
+    def _on_template_level_change(self):
+        if not self.selected_element_id:
+            return
+        new_lvl = self.tmpl_lvl_var.get()
+        self.project.update_element(self.selected_element_id, {"level": new_lvl})
+        self.grid_widget.render_all()
+        self._refresh_stats()
+
+    def _on_add_template_menu(self):
+        menu = tk.Menu(self, tearoff=0, bg=BG_CARD, fg=TEXT_WHITE, activebackground="#1f6feb", font=FONT_REGULAR)
+        menu.add_command(label="Серце", command=lambda: self._apply_template("heart"))
+        menu.add_command(label="Галочка", command=lambda: self._apply_template("check"))
+        menu.add_command(label="Хвиля", command=lambda: self._apply_template("wave"))
+        menu.add_command(label="Шахівниця", command=lambda: self._apply_template("checkerboard"))
+        menu.add_command(label="👾 Загарбник (Space Invader)", command=lambda: self._apply_template("invader"))
+        try:
+            x = self.winfo_pointerx()
+            y = self.winfo_pointery()
+            menu.tk_popup(x, y)
+        finally:
+            menu.grab_release()
 
     def _refresh_elements_listbox(self):
         """Populates elements listbox with current year's items."""
@@ -939,9 +1215,14 @@ class MainWindow(tk.Tk):
             x = el.get("x", 0)
             y = el.get("y", 0)
             self.x_scale.set(x)
-            self.x_val_lbl.config(text=f"тиждень {x}")
+            self.x_val_lbl.config(text=f"тижд. {x}")
             self.y_scale.set(y)
-            self.y_val_lbl.config(text=f"рядок {y}")
+            if y < 0:
+                self.y_val_lbl.config(text=f"вгору {abs(y)}")
+            elif y == 0:
+                self.y_val_lbl.config(text="рядок 0")
+            else:
+                self.y_val_lbl.config(text=f"вниз +{y}")
 
             if el["type"] == "image":
                 self._build_image_inspector(self.type_specific_frame, el)
@@ -953,14 +1234,19 @@ class MainWindow(tk.Tk):
             self._suppress_inspector_updates = False
 
     def _on_inspector_slider_change(self, *args):
-        """Real-time live callback whenever any slider moves!"""
+        """Real-time live callback whenever any slider moves or button is clicked."""
         if self._suppress_inspector_updates or not self.selected_element_id:
             return
 
         x = int(self.x_scale.get())
         y = int(self.y_scale.get())
-        self.x_val_lbl.config(text=f"тиждень {x}")
-        self.y_val_lbl.config(text=f"рядок {y}")
+        self.x_val_lbl.config(text=f"тижд. {x}")
+        if y < 0:
+            self.y_val_lbl.config(text=f"вгору {abs(y)}")
+        elif y == 0:
+            self.y_val_lbl.config(text="рядок 0")
+        else:
+            self.y_val_lbl.config(text=f"вниз +{y}")
 
         updates = {"x": x, "y": y}
 
@@ -969,9 +1255,10 @@ class MainWindow(tk.Tk):
             sens = float(self.sens_scale.get())
             self.sens_val_lbl.config(text=f"{sens:.1f}x")
             h = int(self.h_scale.get())
-            self.h_val_lbl.config(text=f"{h} px")
+            self.h_val_lbl.config(text=f"{h}px")
             inv = self.invert_var.get()
-            updates.update({"sensitivity": sens, "height": h, "invert": inv})
+            crop = self.autocrop_var.get()
+            updates.update({"sensitivity": sens, "height": h, "invert": inv, "autocrop": crop})
 
         # Check if text level is active
         if hasattr(self, "text_lvl_var"):
@@ -985,94 +1272,25 @@ class MainWindow(tk.Tk):
         self.grid_widget.render_all()
         self._refresh_stats()
 
-    def _build_template_inspector(self, parent, el: dict):
-        for w in parent.winfo_children():
-            w.destroy()
-
-        # Row 1: Template Type Selection
-        t_row = tk.Frame(parent, bg=BG_CARD)
-        t_row.pack(fill="x", pady=2)
-
-        tk.Label(t_row, text="Тип шаблону:", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
-
-        self.template_key_var = tk.StringVar(value=el.get("template_key", "heart"))
-        tmpl_choices = [("heart", "Серце"), ("check", "Галочка"), ("wave", "Хвиля"), ("checkerboard", "Шахівниця")]
-
-        for key, title in tmpl_choices:
-            b = tk.Radiobutton(
-                t_row,
-                text=title,
-                variable=self.template_key_var,
-                value=key,
-                bg=BG_CARD,
-                fg=TEXT_WHITE,
-                selectcolor="#1f6feb",
-                activebackground=BTN_SECONDARY_HOVER,
-                font=FONT_SMALL,
-                command=self._on_template_type_change
-            )
-            b.pack(side="left", padx=4)
-
-        # Row 2: Level Selection
-        lvl_row = tk.Frame(parent, bg=BG_CARD)
-        lvl_row.pack(fill="x", pady=2)
-
-        tk.Label(lvl_row, text="Яскравість (Рівень):", bg=BG_CARD, fg=TEXT_PRIMARY, font=FONT_SMALL, width=14, anchor="w").pack(side="left")
-        self.tmpl_lvl_var = tk.IntVar(value=el.get("level", 4))
-
-        for l in range(1, 5):
-            b = tk.Radiobutton(
-                lvl_row,
-                text=f"Рівень {l}",
-                variable=self.tmpl_lvl_var,
-                value=l,
-                indicatoron=0,
-                bg=LEVEL_COLORS[l],
-                fg=TEXT_WHITE,
-                selectcolor="#238636",
-                activebackground=LEVEL_BORDERS[l],
-                font=FONT_SMALL,
-                padx=8,
-                pady=2,
-                command=self._on_template_level_change
-            )
-            b.pack(side="left", padx=2)
-
-    def _on_template_type_change(self):
-        if not self.selected_element_id:
-            return
-        new_key = self.template_key_var.get()
-        self.project.update_element(self.selected_element_id, {"template_key": new_key})
-        self._refresh_elements_listbox()
-        self.grid_widget.render_all()
-        self._refresh_stats()
-
-    def _on_template_level_change(self):
-        if not self.selected_element_id:
-            return
-        new_lvl = self.tmpl_lvl_var.get()
-        self.project.update_element(self.selected_element_id, {"level": new_lvl})
-        self.grid_widget.render_all()
-        self._refresh_stats()
-
-    def _on_add_template_menu(self):
-        menu = tk.Menu(self, tearoff=0, bg=BG_CARD, fg=TEXT_WHITE, activebackground="#1f6feb", font=FONT_REGULAR)
-        menu.add_command(label="Серце", command=lambda: self._apply_template("heart"))
-        menu.add_command(label="Галочка", command=lambda: self._apply_template("check"))
-        menu.add_command(label="Хвиля", command=lambda: self._apply_template("wave"))
-        menu.add_command(label="Шахівниця", command=lambda: self._apply_template("checkerboard"))
-        try:
-            x = self.winfo_pointerx()
-            y = self.winfo_pointery()
-            menu.tk_popup(x, y)
-        finally:
-            menu.grab_release()
+        # Keep listbox coordinate badge in sync
+        sel = self.elements_listbox.curselection()
+        if sel:
+            elements = self.project.get_elements()
+            if 0 <= sel[0] < len(elements):
+                el = elements[sel[0]]
+                disp = f"{el.get('name', 'Елемент')}  [X:{x}]"
+                self.elements_listbox.delete(sel[0])
+                self.elements_listbox.insert(sel[0], disp)
+                self.elements_listbox.selection_set(sel[0])
 
     def _on_live_text_change(self):
         if self._suppress_inspector_updates or not self.selected_element_id:
             return
         new_text = self.live_text_var.get()
-        self.project.update_element(self.selected_element_id, {"text": new_text})
+        updates = {"text": new_text}
+        if hasattr(self, "live_line2_var") and self.font_size_var.get() == "3px":
+            updates["line2"] = self.live_line2_var.get()
+        self.project.update_element(self.selected_element_id, updates)
         self.grid_widget.render_all()
         self._refresh_stats()
 
@@ -1080,8 +1298,10 @@ class MainWindow(tk.Tk):
         sel = self.elements_listbox.curselection()
         if sel:
             x = int(self.x_scale.get())
+            l2 = updates.get("line2", "")
+            disp = f"Текст: «{new_text} / {l2}»" if l2 else f"Текст: «{new_text}»"
             self.elements_listbox.delete(sel[0])
-            self.elements_listbox.insert(sel[0], f"Текст: «{new_text}»  [X:{x}]")
+            self.elements_listbox.insert(sel[0], f"{disp}  [X:{x}]")
             self.elements_listbox.selection_set(sel[0])
 
     def _on_add_image_dialog(self):
@@ -1096,7 +1316,7 @@ class MainWindow(tk.Tk):
                 last_el = existing[-1]
                 next_x = min(46, last_el.get("x", 0) + 12)
 
-            el = self.project.add_image_element(filepath=filepath, x=next_x, y=0, height=7, sensitivity=1.0)
+            el = self.project.add_image_element(filepath=filepath, x=next_x, y=0, height=7, sensitivity=1.0, autocrop=True)
             self.selected_element_id = el["id"]
             self._refresh_elements_listbox()
             self._load_element_into_inspector(el)
@@ -1126,7 +1346,7 @@ class MainWindow(tk.Tk):
             last_el = existing[-1]
             next_x = min(46, last_el.get("x", 0) + 12)
 
-        el = self.project.add_text_element(text="CODE", x=next_x, y=0, level=4)
+        el = self.project.add_text_element(text="CODE", x=next_x, y=0, level=4, font_size="7px", line2="")
         self.selected_element_id = el["id"]
         self._refresh_elements_listbox()
         self._load_element_into_inspector(el)

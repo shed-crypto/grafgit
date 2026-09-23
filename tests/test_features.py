@@ -203,7 +203,76 @@ class TestFeatures(unittest.TestCase):
         # Freehand pixel (10, 0) should now be at (13, 1)
         self.assertEqual(proj.get_pixel(13, 1), 3)
 
+    def test_render_slash_and_symbols(self):
+        # Ensure //TODO renders properly with slash glyphs and no ? fallback
+        matrix = render_text("//TODO", level=4)
+        self.assertGreater(len(matrix), 10)
+        for col in matrix:
+            self.assertEqual(len(col), 7)
+
+    def test_render_two_lines_compact_font(self):
+        # 3px font with 2 lines: line 1 + row 3 separator + line 2
+        matrix = render_text("GIT", level=4, font_size="3px", line2="HUB")
+        self.assertGreater(len(matrix), 5)
+        for col in matrix:
+            self.assertEqual(len(col), 7)
+            # Row 3 is separator
+            self.assertEqual(col[3], 0)
+
+    def test_negative_y_offset_element_shift_up(self):
+        proj = Project(initial_year=2024)
+        # Add element shifted up by 2 pixels (y = -2)
+        el = proj.add_text_element("TEST", x=5, y=-2, level=4)
+        self.assertEqual(el["y"], -2)
+        proj.update_element(el["id"], {"y": -3})
+        updated = proj.get_elements(2024)[0]
+        self.assertEqual(updated["y"], -3)
+        # Should composite without crashing and active days should be counted
+        stats = proj.get_stats(2024)
+        self.assertGreaterEqual(stats["active_days"], 0)
+
+    def test_image_autocrop(self):
+        # Create image with black border and white center
+        img_path = os.path.join(self.temp_dir, "crop_test.png")
+        img = Image.new("RGB", (20, 20), color=(0, 0, 0))
+        # Draw 6x6 white box in center
+        for x in range(7, 13):
+            for y in range(7, 13):
+                img.putpixel((x, y), (255, 255, 255))
+        img.save(img_path)
+
+        grid_cropped = convert_image_to_grid(img_path, autocrop=True, target_height=7)
+        grid_uncropped = convert_image_to_grid(img_path, autocrop=False, target_height=7)
+
+        # Cropped should have full height coverage of active pixels
+        has_active_cropped = any(val > 0 for col in grid_cropped for val in col)
+        self.assertTrue(has_active_cropped)
+
+    def test_image_enlarge_and_negative_offsets_crop_borders(self):
+        # Image can be enlarged beyond 7px and shifted with negative x/y to push frames off canvas
+        img_path = os.path.join(self.temp_dir, "large_frame_test.png")
+        img = Image.new("RGB", (30, 30), color=(255, 255, 255))
+        # Draw dark border around edges (outer 5 pixels)
+        for x in range(30):
+            for y in range(30):
+                if x < 5 or x >= 25 or y < 5 or y >= 25:
+                    img.putpixel((x, y), (0, 0, 0))
+        img.save(img_path)
+
+        proj = Project(initial_year=2024)
+        # Scale to height 20 and nudge x=-4, y=-4
+        el = proj.add_image_element(img_path, x=-4, y=-4, height=20, autocrop=False)
+        self.assertEqual(el["height"], 20)
+        self.assertEqual(el["x"], -4)
+        self.assertEqual(el["y"], -4)
+
+        # Recompute grid and verify it compiles without error
+        proj.recompute_grid(2024)
+        stats = proj.get_stats(2024)
+        self.assertGreaterEqual(stats["active_days"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

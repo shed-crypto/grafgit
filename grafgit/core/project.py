@@ -116,6 +116,7 @@ class Project:
         height: int = 7,
         sensitivity: float = 1.0,
         invert: bool = False,
+        autocrop: bool = True,
         year: Optional[int] = None
     ) -> dict:
         """Adds an image element to the canvas and recomputes the grid."""
@@ -129,11 +130,12 @@ class Project:
             "type": "image",
             "name": f"Зображення: {filename}",
             "filepath": filepath,
-            "x": max(0, min(52, x)),
-            "y": max(0, min(6, y)),
-            "height": max(1, min(7, height)),
+            "x": max(-35, min(55, x)),
+            "y": max(-25, min(25, y)),
+            "height": max(1, min(35, height)),
             "sensitivity": sensitivity,
             "invert": invert,
+            "autocrop": autocrop,
             "visible": True,
         }
         self.elements[target_year].append(el)
@@ -146,6 +148,8 @@ class Project:
         x: int = 2,
         y: int = 0,
         level: int = 4,
+        font_size: str = "7px",
+        line2: str = "",
         year: Optional[int] = None
     ) -> dict:
         """Adds a text element to the canvas and recomputes the grid."""
@@ -153,13 +157,16 @@ class Project:
         if target_year not in self.elements:
             self.elements[target_year] = []
 
+        display_name = f"Текст: «{text}»" if not line2 else f"Текст: «{text} / {line2}»"
         el = {
             "id": str(uuid.uuid4())[:8],
             "type": "text",
-            "name": f"Текст: «{text}»",
+            "name": display_name,
             "text": text,
-            "x": max(0, min(52, x)),
-            "y": max(0, min(6, y)),
+            "line2": line2,
+            "font_size": font_size,
+            "x": max(-35, min(55, x)),
+            "y": max(-25, min(25, y)),
             "level": max(1, min(4, level)),
             "visible": True,
         }
@@ -185,6 +192,7 @@ class Project:
             "check": "Галочка",
             "wave": "Хвиля",
             "checkerboard": "Шахівниця",
+            "invader": "Загарбник",
         }
         title = tmpl_names.get(template_key, template_key.capitalize())
         el = {
@@ -192,8 +200,8 @@ class Project:
             "type": "template",
             "template_key": template_key,
             "name": f"Шаблон: {title}",
-            "x": max(0, min(52, x)),
-            "y": max(0, min(6, y)),
+            "x": max(-35, min(55, x)),
+            "y": max(-25, min(25, y)),
             "level": max(1, min(4, level)),
             "visible": True,
         }
@@ -206,9 +214,17 @@ class Project:
         target_year = year if year is not None else self.active_year
         for el in self.elements.get(target_year, []):
             if el["id"] == element_id:
+                if "x" in updates:
+                    updates["x"] = max(-35, min(55, int(updates["x"])))
+                if "y" in updates:
+                    updates["y"] = max(-25, min(25, int(updates["y"])))
+                if "height" in updates:
+                    updates["height"] = max(1, min(35, int(updates["height"])))
                 el.update(updates)
-                if el["type"] == "text" and "text" in updates:
-                    el["name"] = f"Текст: «{el['text']}»"
+                if el["type"] == "text":
+                    l2 = el.get("line2", "")
+                    t = el.get("text", "")
+                    el["name"] = f"Текст: «{t} / {l2}»" if l2 else f"Текст: «{t}»"
                 elif el["type"] == "image" and "filepath" in updates:
                     el["name"] = f"Зображення: {os.path.basename(el['filepath'])}"
                 elif el["type"] == "template" and "template_key" in updates:
@@ -217,6 +233,7 @@ class Project:
                         "check": "Галочка",
                         "wave": "Хвиля",
                         "checkerboard": "Шахівниця",
+                        "invader": "Загарбник",
                     }
                     title = tmpl_names.get(updates["template_key"], updates["template_key"].capitalize())
                     el["name"] = f"Шаблон: {title}"
@@ -323,7 +340,8 @@ class Project:
                     invert=el.get("invert", False),
                     sensitivity=el.get("sensitivity", 1.0),
                     target_height=el.get("height", 7),
-                    max_width=max_w
+                    max_width=150,
+                    autocrop=el.get("autocrop", True)
                 )
             except Exception:
                 return []
@@ -331,8 +349,10 @@ class Project:
         elif el_type == "text":
             text = el.get("text", "")
             level = el.get("level", 4)
+            font_size = el.get("font_size", "7px")
+            line2 = el.get("line2", "")
             try:
-                return render_text(text, level=level)
+                return render_text(text, level=level, font_size=font_size, line2=line2)
             except Exception:
                 return []
 
@@ -381,6 +401,21 @@ class Project:
             for c in range(min(53, total_cols)):
                 col_data = [(2 if (c + r) % 2 == 0 else 0) for r in range(7)]
                 base.append(col_data)
+        elif name in ("invader", "alien"):
+            # 11x7 Space Invader (exact 7-row fit for GitHub graph!)
+            base = [
+                [0, 0, 0, 4, 4, 4, 0],
+                [0, 0, 4, 4, 0, 0, 0],
+                [4, 4, 4, 4, 4, 4, 0],
+                [0, 4, 0, 4, 4, 0, 4],
+                [0, 4, 4, 4, 4, 0, 4],
+                [0, 4, 4, 4, 4, 0, 0],
+                [0, 4, 4, 4, 4, 0, 4],
+                [0, 4, 0, 4, 4, 0, 4],
+                [4, 4, 4, 4, 4, 4, 0],
+                [0, 0, 4, 4, 0, 0, 0],
+                [0, 0, 0, 4, 4, 4, 0],
+            ]
 
         if target_level != 4 and base:
             scaled: List[List[int]] = []
